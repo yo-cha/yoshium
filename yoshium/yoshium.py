@@ -80,6 +80,15 @@ class Yoshium:
         """
         self.session = session
 
+    def get_current_url(self):
+        """
+        現在のURLを返す
+        :return: 現在のURL
+        """
+        url = self.get_driver().current_url
+        return url
+
+
     def cook_soup(self, response=None, encode='utf-8', parser="html.parser"):
         # TODO パーサーはもっと速いのが使えるかも
         if response is None:
