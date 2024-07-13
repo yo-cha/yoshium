@@ -20,12 +20,20 @@ def wait(num_sec=2):
     time.sleep(num_sec)
 
 
-class Yoshium:
-    # webドライバ
-    driver = None
-    # セッション
-    session = None
+def get_content_text(elem):
+    """
+    表示文字列を返す
+    :param elem:
+    :return: 表示文字列
+    """
+    txt = None
+    # TODO elem.textで空白文字だった場合のみ処理を行うか？
+    if elem:
+        txt = elem.get_attribute("textContent")
+    return txt
 
+
+class Yoshium:
     def __init__(self, headless=False):
         self.driver = None
         self.session = None
@@ -87,7 +95,6 @@ class Yoshium:
         """
         url = self.get_driver().current_url
         return url
-
 
     def cook_soup(self, response=None, encode='utf-8', parser="html.parser"):
         # TODO パーサーはもっと速いのが使えるかも
@@ -277,29 +284,32 @@ class Yoshium:
         :return:
         """
         elem = None
-        if above:
-            # 指定したテキストの上の要素
-            # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-            pass
-        elif to_right_of:
-            # 指定したテキストの右の要素
-            elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/following-sibling::*[1]')
-            # TODO 指定した先にない場合、一つ親の右の要素の子を指定する
-        elif below != None:
-            # 指定したテキストの下の要素
-            # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-            pass
-        elif to_left_of != None:
-            # 指定したテキストの左の要素
-            elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-            # TODO 指定した先にない場合、一つ親の左の要素の子を指定する
-        else:
-            # 指定したテキストの要素
-            # TODO エラー
+        try:
+            if above:
+                # 指定したテキストの上の要素
+                # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                pass
+            elif to_right_of:
+                # 指定したテキストの右の要素
+                elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_right_of}")]/following-sibling::*[1]')
+                # TODO 指定した先にない場合、一つ親の右の要素の子を指定する
+            elif below:
+                # 指定したテキストの下の要素
+                # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                pass
+            elif to_left_of:
+                # 指定したテキストの左の要素
+                elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                # TODO 指定した先にない場合、一つ親の左の要素の子を指定する
+            elif str_value:
+                # 指定したテキストの要素
+                elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{str_value}")]')
+        except selenium.common.exceptions.NoSuchElementException as e:
+            print(e)
             # selenium.common.exceptions.NoSuchElementException:
             # Message: no such element: Unable to locate element: {"method":"xpath","selector":"//*[contains(text(), "女性")]"}
-            elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{str_value}")]')
-        # TODO 見つけられなかったときは？
+            pass
+        # 見つけられなかったときはNoneを返すことになる
         return elem
 
     def elem_button(self, str_value_or_alt=None):
