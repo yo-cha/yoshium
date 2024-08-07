@@ -2,9 +2,8 @@ import os
 import signal
 import requests
 import selenium.webdriver.support.select
-import yoshium
 from webdriver_manager.chrome import ChromeDriverManager
-# from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -21,7 +20,7 @@ def wait(num_sec=2):
     time.sleep(num_sec)
 
 
-def get_text(elem):
+def get_content_text(elem):
     """
     表示文字列を返す
     :param elem:
@@ -29,9 +28,6 @@ def get_text(elem):
     """
     txt = None
     # TODO elem.textで空白文字だった場合のみ処理を行うか？
-    # TODO 縦に長いページでディスプレイ範囲内に無い場合は空文字を返却することがあるか？
-    # TODO スクロールさせてブラウザの描画領域に持ってくる必要？
-    # ((JavaScriptExecutor)driver).executeScript("arguments[0].scrollIntoView(true);", element);
     if elem:
         txt = elem.get_attribute("textContent")
     return txt
@@ -52,11 +48,9 @@ class Yoshium:
                 # ヘッドレスモード指定時
                 op = webdriver.ChromeOptions()
                 op.add_argument("--headless=new")
-                # self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=op)
-                self.driver = webdriver.Chrome(options=op)
+                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=op)
             else:
-                # self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-                self.driver = webdriver.Chrome()
+                self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
             # セッションの取得
             # TODO 必要か？
@@ -247,10 +241,9 @@ class Yoshium:
         else:
             # 要素が存在しないとき
             return None
-
     def elem_xpath(self, str_xpath):
         """
-        X-Pathから最初に見つかった要素を1つ返す
+        CSSセレクタから最初に見つかった要素を1つ返す
         :param str_xpath:
         :return:
         """
@@ -278,92 +271,44 @@ class Yoshium:
             # 要素が存在しないとき
             return None
 
-    def elem_text(self, str_value=None, to_right_of=None, to_left_of=None, above=None, below=None):
-        # TODO （未完成）
+    def elem_text(self, str_value=None, above=None, to_right_of=None, below=None, to_left_of=None):
+        # TODO （未完成）テキストから要素を取得
         """
         指定したテキストの要素を返す。
         テキストは1つのみ指定可。
         :param str_value: このテキストの要素
-        :param to_right_of: このテキストの右の要素
-        :param to_left_of: このテキストの左の要素
         :param above: このテキストの上の要素
+        :param to_right_of: このテキストの右の要素
         :param below: このテキストの下の要素
+        :param to_left_of: このテキストの左の要素
         :return:
         """
         elem = None
-
-        # リンクの文字列はcontains関数で取得できない
-
-        if to_right_of:
-            # (見た目) 指定したテキストの右の要素
-            try:
-                # (HTML) 指定した要素の後ろの要素
-                elem = self.driver.find_element(By.XPATH,
-                                                f'//*[contains(text(), "{to_right_of}")]/following-sibling::*[1]')
-
-            except selenium.common.exceptions.NoSuchElementException as e:
-                try:
-                    # (HTML) 指定した要素の親の後ろの要素
-                    elem = self.driver.find_element(By.XPATH,
-                                                    f'//*[contains(text(), "{to_right_of}")]/../following-sibling::*[1]')
-                except selenium.common.exceptions.NoSuchElementException as e:
-                    pass
-
-        elif to_left_of:
-            # (見た目) 指定したテキストの左の要素
-            try:
-                # (HTML) 指定した要素の前の要素
-                # 前の要素は1番目を指定する
-                # 前の要素の最後尾はコードでは先頭にあたる
-                elem = self.driver.find_element(By.XPATH,
-                                                f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-
-                #####
-                # テスト
-                # 兄弟要素
-                # hoges = self.driver.find_elements(By.XPATH,
-                #                                 f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*')
-                # index = len(hoges)+1
-                # # 指定した要素は兄弟のうち何番目か調べる
-                # print('index: ' + str(index))
-                #
-                # for i, hoge in enumerate(hoges):
-                #     print(f'{i} {yoshium.get_text(hoge)}')
-                #
-                # print()
-
-            except selenium.common.exceptions.NoSuchElementException as e:
-                try:
-                    # (HTML) 指定した要素の親の前の要素
-                    elem = self.driver.find_element(By.XPATH,
-                                                    f'//*[contains(text(), "{to_left_of}")]/preceding::*[1]')
-
-                except selenium.common.exceptions.NoSuchElementException as e:
-                    try:
-                        # 配下にbrタグ以外の要素を持たない要素を選択する
-                        elem = self.driver.find_element(By.XPATH, f'//*[contains(., "{to_left_of}") and (not(*) or '
-                                                              f'br)]/preceding::*[1]')
-                    except selenium.common.exceptions.NoSuchElementException as e:
-                        pass
-        elif above:
-            # 指定したテキストの上の要素
-            # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-            pass
-        elif below:
-            # 指定したテキストの下の要素
-            # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
-            pass
-        elif str_value:
-            # 指定したテキストの要素
-            try:
+        try:
+            if above:
+                # 指定したテキストの上の要素
+                # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                pass
+            elif to_right_of:
+                # 指定したテキストの右の要素
+                elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_right_of}")]/following-sibling::*[1]')
+                # TODO 指定した先にない場合、一つ親の右の要素の子を指定する
+            elif below:
+                # 指定したテキストの下の要素
+                # elem = driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                pass
+            elif to_left_of:
+                # 指定したテキストの左の要素
+                elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{to_left_of}")]/preceding-sibling::*[1]')
+                # TODO 指定した先にない場合、一つ親の左の要素の子を指定する
+            elif str_value:
+                # 指定したテキストの要素
                 elem = self.driver.find_element(By.XPATH, f'//*[contains(text(), "{str_value}")]')
-            except selenium.common.exceptions.NoSuchElementException as e:
-                try:
-                    # 配下にbrタグ以外の要素を持たない要素を選択する
-                    elem = self.driver.find_element(By.XPATH, f'//*[contains(., "{str_value}") and (not(*) or br)]')
-                except selenium.common.exceptions.NoSuchElementException as e:
-                    pass
-
+        except selenium.common.exceptions.NoSuchElementException as e:
+            print(e)
+            # selenium.common.exceptions.NoSuchElementException:
+            # Message: no such element: Unable to locate element: {"method":"xpath","selector":"//*[contains(text(), "女性")]"}
+            pass
         # 見つけられなかったときはNoneを返すことになる
         return elem
 
@@ -466,3 +411,5 @@ class Yoshium:
         else:
             # インデックスから選択
             elem.select_by_index(num_select)
+
+

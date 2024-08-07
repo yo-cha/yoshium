@@ -1,8 +1,15 @@
 Metadata-Version: 2.1
 Name: yoshium
 Version: 0.3.0
+Summary: UNKNOWN
+Home-page: UNKNOWN
 Author: yo_charm
+License: UNKNOWN
+Platform: UNKNOWN
 Requires: requests
 Requires: selenium
 Requires: ChromeDriverManager
 Requires: bs4
+
+UNKNOWN
+
